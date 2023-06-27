@@ -40,7 +40,7 @@ fontLoader.load(
         const textGeometry = new TextGeometry(
             `Loai
 Creative
-Developer`,
+Developer.`,
             {
                 font: font,
                 size: 0.5,
