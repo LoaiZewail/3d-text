@@ -39,7 +39,7 @@ fontLoader.load(
         // Text
         const textGeometry = new TextGeometry(
             `Loai
-Bo2loz
+Creative developer
             `,
             {
                 font: font,
