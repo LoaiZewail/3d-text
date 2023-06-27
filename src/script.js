@@ -39,8 +39,8 @@ fontLoader.load(
         // Text
         const textGeometry = new TextGeometry(
             `Loai
-Creative developer
-            `,
+Creative
+Developer`,
             {
                 font: font,
                 size: 0.5,
