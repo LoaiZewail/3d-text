@@ -114,6 +114,7 @@ controls.enableDamping = true
 controls.autoRotate = true
 controls.autoRotateSpeed = 4
 controls.enableZoom = false
+controls.enablePan = false
 
 /**
  * Renderer
