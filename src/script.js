@@ -1,89 +1,21 @@
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import * as dat from 'lil-gui'
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
-import typefaceFont from 'three/examples/fonts/helvetiker_regular.typeface.json'
 
 THREE.ColorManagement.enabled = false
 
-/**
- * Base
- */
-// Debug
-// const gui = new dat.GUI()
-
-// Canvas
+// Base
 const canvas = document.querySelector('canvas.webgl')
+const scene = new THREE.Scene();
 
-// Scene
-const scene = new THREE.Scene()
+const nearDist = 0.1;
+const farDist = 10000;
 
-/**
- * Textures
- */
-const textureLoader = new THREE.TextureLoader()
-const matcapTexture = textureLoader.load('textures/matcaps/8.png')
-
-/**
- * Fonts
- */
-const fontLoader = new FontLoader()
-
-fontLoader.load(
-    '/fonts/helvetiker_regular.typeface.json',
-    (font) => {
-        // Material
-        const material = new THREE.MeshNormalMaterial({ wireframe: true })
-
-        // Text
-        const textGeometry = new TextGeometry(
-            `Loai
-Creative
-Developer.`,
-            {
-                font: font,
-                size: 0.5,
-                height: 0.2,
-                curveSegments: 12,
-                bevelEnabled: true,
-                bevelThickness: 0.03,
-                bevelSize: 0.02,
-                bevelOffset: 0,
-                bevelSegments: 5
-            }
-        )
-        textGeometry.center()
-
-        const text = new THREE.Mesh(textGeometry, material)
-        scene.add(text)
-
-        // Donuts
-        const donutGeometry = new THREE.TorusGeometry(0.3, 0.2, 32, 64)
-
-        for (let i = 0; i < 100; i++) {
-            const donut = new THREE.Mesh(donutGeometry, material)
-            donut.position.x = (Math.random() - 0.5) * 10
-            donut.position.y = (Math.random() - 0.5) * 10
-            donut.position.z = (Math.random() - 0.5) * 10
-            donut.rotation.x = Math.random() * Math.PI
-            donut.rotation.y = Math.random() * Math.PI
-            const scale = Math.random()
-            donut.scale.set(scale, scale, scale)
-
-            scene.add(donut)
-        }
-    }
-)
-
-/**
- * Sizes
- */
+// Sizes
 const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
 }
-
 window.addEventListener('resize', () => {
     // Update sizes
     sizes.width = window.innerWidth
@@ -98,75 +30,124 @@ window.addEventListener('resize', () => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
-/**
- * Camera
- */
-// Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 1
-camera.position.y = 1
-camera.position.z = 4
-scene.add(camera)
+// Camera
+const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    nearDist,
+    farDist
+);
+camera.position.x = farDist * -2;
+camera.position.z = 900;
 
-// Controls
-const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true
-controls.autoRotate = true
-controls.autoRotateSpeed = 4
-controls.enableZoom = false
-controls.enablePan = false
-
-/**
- * Renderer
- */
+// Renderer
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas
 })
 renderer.outputColorSpace = THREE.LinearSRGBColorSpace
-renderer.setSize(sizes.width, sizes.height)
+renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-/**
- * Animate
- */
-const clock = new THREE.Clock()
+// Donuts
+const cubeSize = 120;
+const geometry = new THREE.TorusGeometry(50, 40, 32, 64)
+const material = new THREE.MeshNormalMaterial({ wireframe: true })
+const group = new THREE.Group();
+for (let i = 0; i < 350; i++) {
+    const mesh = new THREE.Mesh(geometry, material);
+    const dist = farDist / 2;
+    const distDouble = dist * 2;
+    const tau = 2 * Math.PI;
 
-const tick = () => {
-    const elapsedTime = clock.getElapsedTime()
+    mesh.position.x = Math.random() * distDouble - dist;
+    mesh.position.y = Math.random() * distDouble - dist;
+    mesh.position.z = Math.random() * distDouble - dist;
+    mesh.rotation.x = Math.random() * tau;
+    mesh.rotation.y = Math.random() * tau;
+    mesh.rotation.z = Math.random() * tau;
 
-    // Update controls
-    controls.update()
-
-    // Render
-    renderer.render(scene, camera)
-    renderer.setClearColor("#f54fa6")
-
-    // Call tick again on the next frame
-    window.requestAnimationFrame(tick)
+    // Manually control when 3D transformations recalculation occurs for better performance
+    mesh.matrixAutoUpdate = false;
+    mesh.updateMatrix();
+    group.add(mesh);
 }
+scene.add(group);
 
-tick()
+// Text
+const loader = new FontLoader();
+const textMesh = new THREE.Mesh();
+const createTypo = font => {
+    const word =
+        `
+    Loai
+    Creative
+    Developer.
+    `;
+    const typoProperties = {
+        font: font,
+        size: cubeSize * 1.2,
+        height: cubeSize / 2,
+        curveSegments: 5,
+        bevelEnabled: true,
+        bevelThickness: 0.03,
+        bevelSize: 0.02,
+        bevelOffset: 3,
+        bevelSegments: 1
+    };
 
+    const text = new TextGeometry(word, typoProperties);
+    textMesh.geometry = text;
+    textMesh.material = material;
+    textMesh.position.x = -600;
+    textMesh.position.z = -800;
+    textMesh.position.y = 300;
+    scene.add(textMesh);
+};
+loader.load(
+    "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
+    createTypo
+);
 
-    // // Create an event listener for mouse movement
-    // document.addEventListener('mousemove', onMouseMove, false);
+// CREATE PART OF THE MOUSE/TOUCH OVER EFFECT
+let mouseX = 0;
+let mouseY = 0;
+const mouseFX = {
+    windowHalfX: window.innerWidth / 2,
+    windowHalfY: window.innerHeight / 2,
+    coordinates: function (coordX, coordY) {
+        mouseX = (coordX - mouseFX.windowHalfX) * 5;
+        mouseY = (coordY - mouseFX.windowHalfY) * 5;
+    },
+    onMouseMove: function (e) {
+        mouseFX.coordinates(e.clientX, e.clientY);
+    },
+    onTouchMove: function (e) {
+        mouseFX.coordinates(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+    }
+};
+document.addEventListener("mousemove", mouseFX.onMouseMove, false);
+document.addEventListener("touchmove", mouseFX.onTouchMove, false);
 
-    // // Function to handle mouse movement
-    // function onMouseMove(event) {
-    //     // Calculate normalized device coordinates
-    //     const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-    //     const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+// Animation
+const render = () => {
+    requestAnimationFrame(render);
+    // Camera animation
+    camera.position.x += (mouseX - camera.position.x) * 0.05;
+    camera.position.y += (mouseY * -1 - camera.position.y) * 0.05;
+    // Rotates the object to face a point in world space
+    camera.lookAt(scene.position);
 
-    //     // Calculate camera position based on mouse position
-    //     const cameraX = mouseX * 5;
-    //     const cameraY = mouseY * 5;
-
-    //     // Update camera position
-    //     camera.position.x = cameraX;
-    //     camera.position.y = cameraY;
-    //     // Update controls
-    //     controls.update()
-
-    //     // Render
-    //     renderer.render(scene, camera)
-    // }
+    const t = Date.now() * 0.001;
+    const rx = Math.sin(t * 0.7) * 0.5;
+    const ry = Math.sin(t * 0.3) * 0.5;
+    const rz = Math.sin(t * 0.2) * 0.5;
+    group.rotation.x = rx;
+    group.rotation.y = ry;
+    group.rotation.z = rz;
+    textMesh.rotation.x = rx;
+    textMesh.rotation.y = ry;
+    // textMesh.rotation.z = rx;
+    renderer.setClearColor("#f54fa6")
+    renderer.render(scene, camera);
+};
+render();
